@@ -35,16 +35,20 @@ define(["state"],function(State) {
     if (typeof this.net === 'undefined') {
       this.x = Math.round(Math.random()*3)*50;
     } else {
-      var aux = this.net.run([ball.pos.x/150,ball.speed.x/8,ball.speed.y/8])[0]*4;
-      if (aux > 3) aux = 3;
-      console.log("go to: "+aux);
-      this.x = aux*50;
+      var aux = this.net.run([ball.pos.x/200,ball.speed.x/8,ball.speed.y/8])[0];
+      var ballPos = aux*200;
+      this.x = ballPos-this.width/2;
+      if (this.x < 0) this.x = 0;
+      if (this.x > 150) this.x = 150;
+      console.log("net: "+aux+" -> "+ballPos);
     }
-    
+    if (this.notes.length > 0 && typeof this.notes[this.notes.length -1].output === 'undefined') {
+      this.notes.pop();
+    }
     this.notes.push({input:[
-      ball.pos.x,
-      ball.speed.x,
-      ball.speed.y
+      ball.pos.x/200,
+      ball.speed.x/8,
+      ball.speed.y/8
     ]});
   };
 
@@ -52,6 +56,7 @@ define(["state"],function(State) {
     var cur = this.notes[this.notes.length-1];
     if (typeof cur.output === 'undefined') {
       cur.output = [place/200];
+      console.log("cal: "+(place/200)+" -> "+place);
     }
   };
 
@@ -61,9 +66,13 @@ define(["state"],function(State) {
     this.ball = ball;
     this.ball.speed = {x:0,y:0};
     this.net = new brain.NeuralNetwork({
-      hiddenLayers: [4]
+      hiddenLayers: [3]
     });
-    console.log(this.net.train(this.notes));
+    if (typeof this.notes[this.notes.length -1].output === 'undefined') {
+      this.notes.pop();
+    }
+    console.log(this.net.train(this.notes,
+      {iterations: 10000}));
     State.time = new Date().getTime();
     State.delta = 0;
   };
