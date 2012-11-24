@@ -61,7 +61,7 @@ define(["state"],function(State) {
     this.ball = ball;
     this.ball.speed = {x:0,y:0};
     this.net = new brain.NeuralNetwork({
-      hiddenLayers: [300]
+      hiddenLayers: [4]
     });
     console.log(this.net.train(this.notes));
     State.time = new Date().getTime();
