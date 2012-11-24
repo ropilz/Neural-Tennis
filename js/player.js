@@ -33,9 +33,14 @@ define(["state"],function(State){
     if (State.keys.player.space && this.ball) {
       this.ball.setAngle(-1);
       this.ball.pos.y -= 2;
+      this.hit(this.ball);
       this.ball = null;
     }
 
+  };
+
+  player.prototype.hit = function(ball) {
+    State.obj.neural.catchBall(ball);
   };
 
   player.prototype.doService = function(ball) {

@@ -29,7 +29,6 @@ define(function() {
       case 83: //space
         state.keys.neural.space = true; break;
     }
-    console.log(event.keyCode);
   };
   onkeyup = function(event) {
     event.preventDefault();

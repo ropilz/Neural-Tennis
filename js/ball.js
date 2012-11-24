@@ -4,13 +4,14 @@ define(["state"],function(State) {
     this.setAngle(-1);
     State.obj[ball] = this;
     this.note = {};
+    this.notified = false;
   };
 
   ball.prototype.speedV = 8;
   ball.prototype.radius = 4;
   ball.prototype.setAngle = function(angle){
     if (typeof angle == 'undefined') {
-      angle = Math.PI/2*3;
+      angle = Math.PI/4*7;
     } else if (angle == -1) {
       angle = Math.PI*3/4;
     }
@@ -72,8 +73,19 @@ define(["state"],function(State) {
         }
         this.speed.y = Math.sqrt(this.speedV*this.speedV-(this.speed.x*this.speed.x));
         if(!top) this.speed.y*=-1;
+        player.hit(this);
       }
     }
+
+    if (!this.notified && this.pos.y < State.obj.neural.y+16) {
+      State.obj.neural.takeNote(this.pos.x);
+      this.notified = true;
+    }
+    if (this.notified && this.pos.y > State.obj.neural.y+16) {
+      this.notified = false;
+    }
+
+
   };
 
   ball.prototype.draw = function() {
