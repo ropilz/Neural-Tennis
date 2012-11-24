@@ -10,36 +10,49 @@ window.requestAnimFrame = (function(){
     })();
 
 requirejs.config({
-    //By default load any module IDs from js/lib
     baseUrl: 'js',
-    //except, if the module ID starts with "app",
-    //load it from the js/app directory. paths
-    //config is relative to the baseUrl, and
-    //never includes a ".js" extension since
-    //the paths config could be for a directory.
     paths: {}
 });
-require(["state", "player"],function(State, Player){
+require(["state", "player","ball", "neuralPlayer"],function(State, Player, Ball, Neural){
   var body = document.body;
 
   /* canvas setup */
   var canvas = document.createElement("canvas");
   canvas.width = State.conf.width;
   canvas.height = State.conf.height;
+  canvas.style.float = 'left';
   body.appendChild(canvas);
-  var ctx = canvas.getContext("2d");
+  State.ctx = canvas.getContext("2d");
 
-  /* player setup */
-  var player = new Player();
-  player.setContext(ctx);
+  /* score setup */
+  var score = document.createElement("div");
+  score.style.float = 'left';
+  score.style.width = '50px';
+  score.style['padding-top'] = State.conf.height/2+'px';
+  body.appendChild(score);
+  score.innerText = "0 \n 0";
 
-  requestAnimFrame(function loop() {
-    canvas.width = State.conf.width;
-    canvas.height = State.conf.height;
-    ctx.fillStyle="rgba(200,255,200,1)";
-    ctx.fillRect(0,0,State.conf.width,State.conf.height);
+  /* Create objects */
+  var player = new Player("player");
+  var ball  = new Ball("ball");
+  var neural = new Neural("neural");
+  State.time = new Date().getTime();
+  player.doService(ball);
+
+  requestAnimFrame(function loop(time) {
+    State.delta = time - State.time;
+    State.time = time;
+    player.step();
+    neural.step();
+    ball.step();
+
+    State.ctx.fillStyle="rgba(200,255,200,0.8)";
+    State.ctx.fillRect(0,0,State.conf.width,State.conf.height);
 
     player.draw();
+    neural.draw();
+    ball.draw();
+    score.innerText = neural.score+" \n "+player.score;
     requestAnimFrame(loop);
   });
 
