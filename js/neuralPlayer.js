@@ -35,7 +35,7 @@ define(["state"],function(State) {
     if (typeof this.net === 'undefined') {
       this.x = Math.round(Math.random()*3)*50;
     } else {
-      var aux = this.net.run([ball.pos.x/200,ball.speed.x/8,ball.speed.y/8])[0];
+      var aux = this.net.run([ball.pos.x/200,ball.speed.x/8])[0];
       var ballPos = aux*200;
       this.x = ballPos-this.width/2;
       if (this.x < 0) this.x = 0;
@@ -47,8 +47,7 @@ define(["state"],function(State) {
     }
     this.notes.push({input:[
       ball.pos.x/200,
-      ball.speed.x/8,
-      ball.speed.y/8
+      ball.speed.x/8
     ]});
   };
 
@@ -66,7 +65,7 @@ define(["state"],function(State) {
     this.ball = ball;
     this.ball.speed = {x:0,y:0};
     this.net = new brain.NeuralNetwork({
-      hiddenLayers: [3]
+      hiddenLayers: [5]
     });
     if (typeof this.notes[this.notes.length -1].output === 'undefined') {
       this.notes.pop();
