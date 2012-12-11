@@ -1,51 +1,117 @@
-define(["state"],function(State){
-  var player = function (player){
-    this.x = 0;
-    this.y = State.conf.height-20;
+define(["state", 'underscore'],function(State, _){
+
+  var player = function (options){
+    var playerNum = 0;
+    this.color = "blue";
+    this.name = "blue";
     this.score = 0;
-    State.obj[player] = this;
+    this.top = false;
+    this.x = State.conf.width/2 - 25;
+    this.y = State.conf.height-20;
+    this.width = 50;
+    this.height = 10;
+    this.speedX = 8;
+    this.control = {
+      left: false,
+      right: false,
+      fire: false,
+      doService: function(){}
+    };
+
+    for (var opt in options){
+      var val = options[opt];
+      switch (opt) {
+        case 'name':
+          this.name = val;
+          break;
+        case 'score':
+          this.score = val;
+          break;
+        case 'color':
+          this.color = val;
+          break;
+        case 'top':
+          if (val) {
+            this.y = 10;
+            playerNum = 1;
+          }
+          this.top = val;
+          break;
+        case 'width':
+          this.width = val;
+          break;
+        case 'height':
+          this.height = val;
+          break;
+        case 'control':
+          this.control = val;
+          val.setPlayer(this);
+          break;
+      }
+    }
+    State.obj.Player[playerNum] = this;
   };
-  
-  player.prototype.width = 50;
-  player.prototype.height = 10;
+
+  function inRange(x, min, max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
+  }
 
   player.prototype.draw = function() {
-    State.ctx.fillStyle="blue";
+    State.ctx.fillStyle = this.color;
     State.ctx.fillRect(this.x,this.y,this.width,this.height);
   };
+
+  player.prototype.moveTo = function(x) {
+    var oldX = this.x;
+    this.x = x - this.width/2;
+    this.x = inRange(this.x,0,State.conf.width - this.width);
+    return oldX !== this.x;
+  };
+
+  player.prototype.getX = function() {
+    return this.x + this.width/2;
+  };
+
+  player.prototype.getY = function() {
+    return this.y + (this.top?10:0);
+  };
+
   player.prototype.step = function() {
-    if (State.keys.player.left) {
-      this.x -= 8.5;
-      if (this.x < 0) {
-        this.x = 0;
-      }
-    }
-    if (State.keys.player.right) {
-      this.x += 8.5;
-      if (this.x > State.conf.width-this.width) {
-        this.x = State.conf.width-this.width;
-      }
-    }
+    if (this.control.left) this.x -= this.speedX;
+    if (this.control.right) this.x += this.speedX;
+    this.x = inRange(this.x,0,State.conf.width - this.width);
+
     if (this.ball) {
-      this.ball.pos.y = this.y - this.ball.radius;
       this.ball.pos.x = this.x + this.width/2;
+      if (this.top) {
+        this.ball.pos.y = this.y + 10 + this.ball.radius;
+      } else {
+        this.ball.pos.y = this.y - this.ball.radius;
+      }
     }
-    if (State.keys.player.space && this.ball) {
-      this.ball.setAngle(-1);
+    if (this.control.fire && this.ball) {
+      this.ball.setAngle(this.top?1:-1);
       this.ball.pos.y -= 2;
       this.hit(this.ball);
       this.ball = null;
     }
+  };
 
+  player.prototype.setControl = function(control) {
+    this.control = control;
   };
 
   player.prototype.hit = function(ball) {
-    State.obj.neural.catchBall(ball);
+    ball.hit(this);
   };
 
   player.prototype.doService = function(ball) {
     this.ball = ball;
     this.ball.speed = {x:0,y:0};
+    this.control.doService();
   };
+
   return player;
 });

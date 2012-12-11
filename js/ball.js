@@ -1,91 +1,117 @@
-define(["state"],function(State) {
-  var ball = function(ball) {
+define(["state", 'underscore'],function(State, _) {
+  function inRange(x, min, max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
+  }
+
+  var ball = function() {
     this.pos = {x:0, y:0};
-    this.setAngle(-1);
-    State.obj[ball] = this;
-    this.note = {};
-    this.notified = false;
+    this.speed = {x:8, y:0};
+    this.backUp();
+    State.obj.ball = this;
+    this.callback = {onHit: [], onCheck: []};
+  };
+
+  ball.prototype.backUp = function() {
+    this.prev = {
+      pos: {
+        x:this.pos.x,
+        y:this.pos.y
+      },
+      speed: {
+        x:this.speed.x,
+        y:this.speed.y
+      }
+    };
   };
 
   ball.prototype.speedV = 8;
   ball.prototype.radius = 4;
+
+  ball.prototype.onCheck = function(fn) {
+    this.callback.onCheck.push(fn);
+  };
+
+  ball.prototype.check = function(player) {
+    _.each(this.callback.onCheck, function(fn) {
+      fn(State.obj.ball, player);
+    });
+  };
+
+  ball.prototype.onHit = function(fn) {
+    this.callback.onHit.push(fn);
+  };
+
+  ball.prototype.hit = function(player) {
+    _.each(this.callback.onHit, function(fn) {
+      fn(State.obj.ball, player);
+    });
+  };
+
   ball.prototype.setAngle = function(angle){
-    if (typeof angle == 'undefined') {
+    if (typeof angle == 'undefined' || angle === 1) {
       angle = Math.PI/4*7;
     } else if (angle == -1) {
       angle = Math.PI*3/4;
     }
     this.speed =
-      {x:Math.sin(angle)*this.speedV,
-       y:Math.cos(angle)*this.speedV};
-    this.angle = angle;
+      {
+        x:Math.sin(angle)*this.speedV,
+        y:Math.cos(angle)*this.speedV
+      };
   };
 
   ball.prototype.step = function() {
+    this.backUp();
     this.pos.x += this.speed.x*State.delta/1000*60;
     this.pos.y += this.speed.y*State.delta/1000*60;
-    this.resolve();
+    this.collide();
   };
 
-  ball.prototype.resolve = function() {
+  ball.prototype.collide = function() {
     /* wall collisions */
-    if (this.pos.x < this.radius) {
-      this.pos.x = this.radius;
+    if (this.pos.x < this.radius) { // left
+      this.pos.x = this.radius*2 - this.pos.x;
       this.speed.x *= -1;
     }
     if (this.pos.y < this.radius) { // top
-      State.obj.neural.doService(State.obj.ball);
-      State.obj.player.score += 1;
+      State.obj.Player[1].doService(this);
+      State.obj.Player[1].score += 1;
     }
-    if (this.pos.x > State.conf.width-this.radius) {
-      this.pos.x = State.conf.width-this.radius;
+    if (this.pos.x > State.conf.width-this.radius) { // right
+      this.pos.x = 2*State.conf.width-2*this.radius-this.pos.x;
       this.speed.x *= -1;
     }
     if (this.pos.y > State.conf.height-this.radius) { // bottom
-      State.obj.player.doService(State.obj.ball);
-      State.obj.neural.score += 1;
+      State.obj.Player[0].doService(this);
+      State.obj.Player[0].score += 1;
     }
+
     /* player collisions */
-    var players = [
+    var player = State.obj.Player[0],
+        prevY = this.prev.pos.y,
+        curY = this.pos.y;
+    if (this.speed.y < 0) player = State.obj.Player[1];
+    if (player.top && (prevY - 4 > player.getY() && player.getY() >= curY - 4)||
+        !player.top && (prevY + 4 < player.getY() && player.getY() <= curY + 4))
       {
-        player:State.obj.player,
-        top: false
-      },
-      {
-        player:State.obj.neural,
-        top:true
-      }];
-    for (var p=0, l=players.length;p<l;p+=1){
-      var player = players[p].player;
-      var top = players[p].top;
-      if ( player.x-4 < this.pos.x && this.pos.x < player.x+player.width+4 &&
-           player.y-4 < this.pos.y && this.pos.y < player.y+player.height+4 ) {
-        this.speed.y *= -1;
-        if (top) {
-          this.pos.y = player.y+player.height+5;
-        } else {
-          this.pos.y = player.y-5;
+        this.check(player);
+        if (player.x < this.pos.x+4  && this.pos.x-4 < player.x + player.width) {
+          if (player.top) {
+            this.pos.y = player.y + player.height + this.radius + 1;
+          } else {
+            this.pos.y = player.y - this.radius - 1;
+          }
+          var deltaX = this.pos.x - player.x - player.width/2;
+          this.speed.x += deltaX/player.width*this.speedV/4;
+          this.speed.x = inRange(this.speed.x,this.speedV*-0.8, this.speedV*0.8);
+          this.speed.y = Math.sqrt( this.speedV*this.speedV-
+                                    this.speed.x*this.speed.x);
+          if(!player.top) this.speed.y*=-1;
+          player.hit(this);
         }
-        var angleDelta = this.pos.x - player.x - player.width/2;
-        this.speed.x += angleDelta/player.width*this.speedV/4;
-        if (Math.abs(this.speed.x) > this.speedV*0.8) {
-          this.speed.x = this.speed.x>0?this.speedV*0.8:this.speedV*-0.8;
-        }
-        this.speed.y = Math.sqrt(this.speedV*this.speedV-(this.speed.x*this.speed.x));
-        if(!top) this.speed.y*=-1;
-        player.hit(this);
-      }
     }
-
-    if (!this.notified && this.pos.y < State.obj.neural.y+16) {
-      State.obj.neural.takeNote(this.pos.x);
-      this.notified = true;
-    }
-    if (this.notified && this.pos.y > State.obj.neural.y+16) {
-      this.notified = false;
-    }
-
-
   };
 
   ball.prototype.draw = function() {

@@ -11,9 +11,19 @@ window.requestAnimFrame = (function(){
 
 requirejs.config({
     baseUrl: 'js',
-    paths: {}
+    paths: {},
+    shim: {
+      'underscore': {
+        deps: [],
+        exports: '_',
+        init: function() {
+          return this._.noConflict();
+        }
+      }
+    }
 });
-require(["state", "player","ball", "neuralPlayer"],function(State, Player, Ball, Neural){
+require(["state", "player", "ball", 'underscore', 'card'],
+function(State, Player, Ball, _, Card){
   var body = document.body;
 
   /* canvas setup */
@@ -33,26 +43,44 @@ require(["state", "player","ball", "neuralPlayer"],function(State, Player, Ball,
   score.innerText = "0 \n 0";
 
   /* Create objects */
-  var player = new Player("player");
-  var ball  = new Ball("ball");
-  var neural = new Neural("neural");
+  var ball  = new Ball();
+  var player = new Player(
+    {
+      'name':'Player1',
+      'color':'blue',
+      'top': false
+    });
+  var player2 = new Player(
+    {
+      'name':'Player2',
+      'color':'red',
+      'top': true
+    });
+  var card = Card(player, player2);
+  body.appendChild(card);
+
   State.time = new Date().getTime();
-  player.doService(ball);
+  State.obj.Player[0].doService(ball);
 
   requestAnimFrame(function loop(time) {
     State.delta = time - State.time;
     State.time = time;
-    player.step();
-    neural.step();
+
+    _.each(State.obj.Player, function(player){
+      player.step();
+    });
+    
     ball.step();
 
     State.ctx.fillStyle="rgba(200,255,200,0.8)";
     State.ctx.fillRect(0,0,State.conf.width,State.conf.height);
 
-    player.draw();
-    neural.draw();
+    _.each(State.obj.Player, function(player){
+      player.draw();
+    });
+    
     ball.draw();
-    score.innerText = neural.score+" \n "+player.score;
+    score.innerText = State.obj.Player[0].score+" \n "+State.obj.Player[1].score;
     requestAnimFrame(loop);
   });
 
