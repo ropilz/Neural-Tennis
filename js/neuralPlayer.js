@@ -95,5 +95,9 @@ define(["state", 'underscore'],function(State, _) {
       }
     }
   };
+
+  neural.prototype.unplug = function(){
+    ball.onHit(this.hit, true);
+  };
   return neural;
 });

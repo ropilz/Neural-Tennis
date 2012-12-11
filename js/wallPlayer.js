@@ -47,9 +47,12 @@ define(["state", 'underscore'],function(State, _) {
           finalX  = Math.floor((deltaX + start) % State.conf.width);
       if (ball.speed.x < 0) bounces += 1;
       if (bounces % 2 !== 0) finalX = State.conf.width - finalX;
-      console.log(finalX);
       this.player.moveTo(finalX);
     }
+  };
+
+  wall.prototype.unplug = function(){
+    this.ball.onHit(this.hit, true);
   };
   return wall;
 });

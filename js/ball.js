@@ -6,7 +6,7 @@ define(["state", 'underscore'],function(State, _) {
   }
 
   var ball = function() {
-    this.pos = {x:0, y:0};
+    this.pos = {x:State.conf.width/2, y:State.conf.height/2};
     this.speed = {x:8, y:0};
     this.backUp();
     State.obj.ball = this;
@@ -27,7 +27,7 @@ define(["state", 'underscore'],function(State, _) {
   };
 
   ball.prototype.speedV = 8;
-  ball.prototype.radius = 4;
+  ball.prototype.radius = 5;
 
   ball.prototype.onCheck = function(fn) {
     this.callback.onCheck.push(fn);
@@ -39,8 +39,15 @@ define(["state", 'underscore'],function(State, _) {
     });
   };
 
-  ball.prototype.onHit = function(fn) {
-    this.callback.onHit.push(fn);
+  ball.prototype.onHit = function(fn, remove) {
+    if (remove) {
+      var index = this.callback.onHit.indexOf(fn);
+      if (index >= 0) {
+        this.callback.onHit.splice(index,1);
+      }
+    } else {
+      this.callback.onHit.push(fn);
+    }
   };
 
   ball.prototype.hit = function(player) {
@@ -77,7 +84,7 @@ define(["state", 'underscore'],function(State, _) {
     }
     if (this.pos.y < this.radius) { // top
       State.obj.Player[1].doService(this);
-      State.obj.Player[1].score += 1;
+      State.obj.Player[0].scoreUp();
     }
     if (this.pos.x > State.conf.width-this.radius) { // right
       this.pos.x = 2*State.conf.width-2*this.radius-this.pos.x;
@@ -85,7 +92,7 @@ define(["state", 'underscore'],function(State, _) {
     }
     if (this.pos.y > State.conf.height-this.radius) { // bottom
       State.obj.Player[0].doService(this);
-      State.obj.Player[0].score += 1;
+      State.obj.Player[1].scoreUp();
     }
 
     /* player collisions */
@@ -115,11 +122,10 @@ define(["state", 'underscore'],function(State, _) {
   };
 
   ball.prototype.draw = function() {
-    State.ctx.fillStyle="black";
+    State.ctx.fillStyle="#D6D6A0";
     State.ctx.beginPath();
     State.ctx.arc(this.pos.x,this.pos.y,this.radius,0,Math.PI*2,true);
     State.ctx.fill();
-    State.ctx.stroke();
   };
 
   return ball;

@@ -15,8 +15,11 @@ define(["state", 'underscore'],function(State, _){
       left: false,
       right: false,
       fire: false,
-      doService: function(){}
+      doService: function(){},
+      unplug: function(){}
     };
+
+    this.callback = {onScore:[]};
 
     for (var opt in options){
       var val = options[opt];
@@ -44,8 +47,7 @@ define(["state", 'underscore'],function(State, _){
           this.height = val;
           break;
         case 'control':
-          this.control = val;
-          val.setPlayer(this);
+          this.setControl(val);
           break;
       }
     }
@@ -100,7 +102,11 @@ define(["state", 'underscore'],function(State, _){
   };
 
   player.prototype.setControl = function(control) {
+    if (this.control) {
+      this.control.unplug();
+    }
     this.control = control;
+    control.setPlayer(this);
   };
 
   player.prototype.hit = function(ball) {
@@ -111,6 +117,27 @@ define(["state", 'underscore'],function(State, _){
     this.ball = ball;
     this.ball.speed = {x:0,y:0};
     this.control.doService();
+  };
+
+  player.prototype.scoreUp = function(score) {
+    if (typeof score === 'undefined') {
+      score = 1;
+    }
+    this.score += score;
+  _.each(this.callback.onScore, function(fn) {
+      fn(this.score);
+    }, this);
+  };
+
+  player.prototype.onScore = function(fn, remove) {
+  if (remove) {
+    var index = this.callback.onScore.indexOf(fn);
+    if (index >= 0) {
+      this.callback.onScore.splice(index,1);
+    }
+  } else {
+    this.callback.onScore.push(fn);
+  }
   };
 
   return player;

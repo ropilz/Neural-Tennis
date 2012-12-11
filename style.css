@@ -1,6 +1,28 @@
 .card {
 	width: 350px;
-	height: 200px;
-	background-color: green;
+	height: 173px;
+	margin: 0 0 10px 15px;
+	padding: 10px;
+	background-color: #F4F9F4;
+	border-radius: 20px 0;
+	border-width: 1px;
+	border-style: outset;
+	box-shadow: 1px 2px 15px;
+	position: relative;
+}
+
+.info {
 	float: left;
+}
+
+.score {
+	float: right;
+	color: #A533A5;
+	font-size: 60px;
+	font-style: italic;
+	margin: 0;
+}
+
+.score .pts {
+	font-size: 0.33em;
 }

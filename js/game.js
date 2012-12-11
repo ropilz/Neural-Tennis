@@ -34,45 +34,47 @@ function(State, Player, Ball, _, Card){
   body.appendChild(canvas);
   State.ctx = canvas.getContext("2d");
 
-  /* score setup */
-  var score = document.createElement("div");
-  score.style.float = 'left';
-  score.style.width = '50px';
-  score.style['padding-top'] = State.conf.height/2+'px';
-  body.appendChild(score);
-  score.innerText = "0 \n 0";
-
   /* Create objects */
   var ball  = new Ball();
   var player = new Player(
     {
       'name':'Player1',
-      'color':'blue',
+      'color':'#F0F0FF',
       'top': false
     });
   var player2 = new Player(
     {
       'name':'Player2',
-      'color':'red',
+      'color':'#FFF0F0',
       'top': true
     });
   var card = Card(player, player2);
   body.appendChild(card);
 
   State.time = new Date().getTime();
-  State.obj.Player[0].doService(ball);
 
+  var first = true;
+  var paused = false;
   requestAnimFrame(function loop(time) {
     State.delta = time - State.time;
     State.time = time;
+    if (Card.paused) {
+      paused = true;
+    } else if (paused) {
+      paused = false;
+      State.delta = 0;
+    } else if (first) {
+      State.obj.Player[1].doService(ball);
+      first = false;
+    }
 
-    _.each(State.obj.Player, function(player){
-      player.step();
-    });
-    
-    ball.step();
-
-    State.ctx.fillStyle="rgba(200,255,200,0.8)";
+    if (!paused) {
+      _.each(State.obj.Player, function(player){
+        player.step();
+      });
+      ball.step();
+    }
+    State.ctx.fillStyle="#451867";
     State.ctx.fillRect(0,0,State.conf.width,State.conf.height);
 
     _.each(State.obj.Player, function(player){
@@ -80,7 +82,6 @@ function(State, Player, Ball, _, Card){
     });
     
     ball.draw();
-    score.innerText = State.obj.Player[0].score+" \n "+State.obj.Player[1].score;
     requestAnimFrame(loop);
   });
 

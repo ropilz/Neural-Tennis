@@ -11,7 +11,9 @@ define(['state', 'events', 'underscore'],function(State, event, _){
       83: 'fire'   // s
     }
   ];
-  var player = function (number){
+  var player = function (options){
+    var number = options['number'];
+
     this.left = false;
     this.rigth = false;
     this.fire = false;
@@ -33,6 +35,11 @@ define(['state', 'events', 'underscore'],function(State, event, _){
   player.prototype.onKeyUp = function(event) {
     event.preventDefault();
     this[this.keys[event.keyCode]] = false;
+  };
+
+  player.prototype.unplug = function() {
+    event.onKeyDown(this.onKeyDown, true);
+    event.onKeyUp(this.onKeyUp, true);
   };
 
   player.prototype.doService = function(){};
