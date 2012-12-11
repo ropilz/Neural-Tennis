@@ -171,7 +171,7 @@ function(State, Neural, Human, Wall, _){
           neuralInfo.status.error.innerText = '0.000';
           neuralInfo.status.appendChild(neuralInfo.status.error);
           neuralInfo.appendChild(neuralInfo.status);
-          // player.control.train();
+          player.control.train();
         }
       };
 
