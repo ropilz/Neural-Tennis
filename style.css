@@ -4,6 +4,7 @@
 	margin: 0 0 10px 15px;
 	padding: 10px;
 	background-color: #F4F9F4;
+	background-color: rgba(244,249,244,0.8);
 	border-radius: 20px 0;
 	border-width: 1px;
 	border-style: outset;
@@ -25,4 +26,46 @@
 
 .score .pts {
 	font-size: 0.33em;
+}
+
+.neuralInfo {
+	margin: 15px 30px;
+	height: 130px;
+}
+.neuralInfo > .layer {
+	overflow: hidden;
+}
+
+.neuralInfo > .layer > div {
+	float: left;
+	width: 9px;
+	height: 9px;
+	margin: 3px;
+	line-height: 9px;
+}
+
+.neuralInfo > .layer > .node {
+	border-width: 1px;
+	border-style: solid;
+	background-color: white;
+	border-color: #666666;
+	color: #666666;
+}
+
+.disabled .addLayer, .disabled .addBtn {
+	display: none;
+}
+.addLayer {
+	border: none;
+	background-color: transparent;
+}
+
+.status {
+	bottom: 10px;
+	position: absolute;
+	color: #632828;
+	font-size: 20px;
+	font-style: italic;
+	text-align: right;
+	width: 300px;
 }

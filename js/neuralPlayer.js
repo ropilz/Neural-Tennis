@@ -35,8 +35,14 @@ define(["state", 'underscore'],function(State, _) {
     this.fire = false;
 
     this.name = 'neural';
+
+    this.hiddenLayers = [5];
+    this.learningRate = 0.1;
+    this.iterations = 1000;
+
     this.net = undefined;
-    _.bindAll(this,'hit');
+    this.callback = {onTrain: []};
+    _.bindAll(this,'hit', 'doService');
     for (var opt in options){
       var val = options[opt];
       switch (opt) {
@@ -63,14 +69,22 @@ define(["state", 'underscore'],function(State, _) {
     setTimeout(function(){
       player.fire = true;
     },throwTime);
+    this.train();
+  };
+
+  neural.prototype.train = function() {
     if (notes.length > 1) {
       this.net = new brain.NeuralNetwork({
-        hiddenLayers: [5],
-        learningRate: 0.1
+        hiddenLayers: [this.hiddenLayers],
+        learningRate: this.learningRate
       });
-      this.net.train(notes,{
-        iterations: 10000
+      var status = this.net.train(notes,{
+        iterations: this.iterations
       });
+
+      _.each(this.callback.onTrain, function(fn) {
+        fn(this.net, status);
+      }, this);
     }
   };
 
@@ -98,6 +112,17 @@ define(["state", 'underscore'],function(State, _) {
 
   neural.prototype.unplug = function(){
     ball.onHit(this.hit, true);
+  };
+
+  neural.prototype.onTrain = function(fn, remove) {
+    if (remove) {
+      var index = this.callback.onTrain.indexOf(fn);
+      if (index >= 0) {
+        this.callback.onTrain.splice(index,1);
+      }
+    } else {
+      this.callback.onTrain.push(fn);
+    }
   };
   return neural;
 });

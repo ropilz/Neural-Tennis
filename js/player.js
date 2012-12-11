@@ -124,20 +124,20 @@ define(["state", 'underscore'],function(State, _){
       score = 1;
     }
     this.score += score;
-  _.each(this.callback.onScore, function(fn) {
+    _.each(this.callback.onScore, function(fn) {
       fn(this.score);
     }, this);
   };
 
   player.prototype.onScore = function(fn, remove) {
-  if (remove) {
-    var index = this.callback.onScore.indexOf(fn);
-    if (index >= 0) {
-      this.callback.onScore.splice(index,1);
+    if (remove) {
+      var index = this.callback.onScore.indexOf(fn);
+      if (index >= 0) {
+        this.callback.onScore.splice(index,1);
+      }
+    } else {
+      this.callback.onScore.push(fn);
     }
-  } else {
-    this.callback.onScore.push(fn);
-  }
   };
 
   return player;
