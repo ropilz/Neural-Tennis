@@ -117,33 +117,41 @@ function(State, Neural, Human, Wall, _){
         neuralInfo.innerHTML = "";
         if (neural) {
           var hl = player.control.hiddenLayers.length;
-          var nodes = player.control.hiddenLayers;
+          var nodes = [3].concat(player.control.hiddenLayers,[1]);
           var lr = player.control.learningRate;
           var it = player.control.iterations;
           var c, end;
           neuralInfo.rows = [];
-          for (c = 0; c<hl; c+=1) {
+
+          // Create basic divs
+          for (c = 0; c<hl+2; c+=1) {
             neuralInfo.rows.push(document.createElement('div'));
           }
+
           _.each(neuralInfo.rows, function(row, pos) {
             row.classList.add('layer');
-            var addBtn = document.createElement('div');
-            addBtn.classList.add('addBtn');
-            addBtn.innerText = '+';
-            addBtn.onclick = function() {
-              if (neural && row.nodes.length < 10) {
-                player.control.hiddenLayers[pos] += 1;
-                neuralInfo.createRows();
-              }
-            };
-            row.appendChild(addBtn);
+            if ( 0 <= pos -1 && pos -1 < hl) {
+              var addBtn = document.createElement('div');
+              addBtn.classList.add('addBtn');
+              addBtn.innerText = '+';
+              addBtn.onclick = function() {
+                if (neural && row.nodes.length < 10) {
+                  player.control.hiddenLayers[pos-1] += 1;
+                  neuralInfo.createRows();
+                }
+              };
+              row.appendChild(addBtn);
+            }
             row.nodes = [];
             for (c = 0, end = nodes[pos]; c < end; c+=1) {
               row.nodes.push(document.createElement('div'));
               row.nodes[c].classList.add('node');
               row.nodes[c].onclick = function() {
-                if (neural) {
-                  player.control.hiddenLayers[pos] -= 1;
+                if (neural && editing) {
+                  player.control.hiddenLayers[pos-1] -= 1;
+                  if (player.control.hiddenLayers[pos-1] === 0) {
+                    player.control.hiddenLayers.splice(pos-1,1);
+                  }
                   neuralInfo.createRows();
                 }
               };
@@ -151,16 +159,18 @@ function(State, Neural, Human, Wall, _){
             }
             neuralInfo.appendChild(row);
           });
-          var addLayer = document.createElement('button');
-          addLayer.classList.add('addLayer');
-          addLayer.innerText = '+ Add layer';
-          addLayer.onclick = function() {
-            if (neural && player.control.hiddenLayers.length < 4) {
-              player.control.hiddenLayers.push(player.control.hiddenLayers[0]);
-              neuralInfo.createRows();
-            }
-          };
-          neuralInfo.appendChild(addLayer);
+          if (hl < 4){
+            var addLayer = document.createElement('button');
+            addLayer.classList.add('addLayer');
+            addLayer.innerText = '+ Add layer';
+            addLayer.onclick = function() {
+              if (neural && player.control.hiddenLayers.length < 4) {
+                player.control.hiddenLayers.push(player.control.hiddenLayers[0]);
+                neuralInfo.createRows();
+              }
+            };
+            neuralInfo.appendChild(addLayer);
+          }
 
           neuralInfo.status = document.createElement('div');
           neuralInfo.status.classList.add('status');
@@ -176,20 +186,43 @@ function(State, Neural, Human, Wall, _){
       };
 
       neuralInfo.updateRows = function(net, output) {
-        var weights = net.weights;
-        var hiddenLayers = net.weights.length -1;
-        var cap = 2;
-        for (var layer = 1; layer < hiddenLayers; layer += 1) {
-          var end = weights[layer].length;
-          for (var node = 0; node < end; node += 1 ) {
-            var red = Math.round((weights[layer][node][0] + cap) / 2 / cap * 255);
-            var green = Math.round((weights[layer][node][1] + cap) / 2 / cap * 255);
-            var blue = Math.round((weights[layer][node][2] + cap) / 2 / cap * 255);
+        var weights = _.clone(net.weights);
+        weights[0] = [[1,0,0],[0,1,0],[0,0,1]];
+        var prevColors = weights[0];
+        var colors;
 
-            neuralInfo.rows[layer-1].nodes[node].style.backgroundColor =
-              'rgba('+red+','+green+','+blue+',1)';
-          }
-        }
+        _(weights).each(function(layer, l){
+
+          var layerColor = _(layer).chain()
+            .map(function(node){
+              var red=0, green=0, blue=0;
+              _(node).each(function(value, index) {
+                red+= value*prevColors[index][0];
+                green+= value*prevColors[index][1];
+                blue+= value*prevColors[index][2];
+              });
+              return [red,green,blue];
+            });
+          prevColors = layerColor.value();
+          var max = _(layerColor).chain()
+                      .flatten().map(Math.abs).max().value();
+          colors = _(layerColor).chain()
+            .map(function(node){
+              return [
+                Math.abs(Math.round(node[0] / max * 255)),
+                Math.abs(Math.round(node[1] / max * 255)),
+                Math.abs(Math.round(node[2] / max * 255))
+              ];
+            })
+            // .sortBy(function(node){
+            //   return (node[1]*256+node[0])*256+node[2];
+            // });
+          colors.each(function(node, n){
+              neuralInfo.rows[l].nodes[n].style.backgroundColor =
+                'rgba('+node[0]+','+node[1]+','+node[2]+',1)';
+              neuralInfo.rows[l].nodes[n].title = node[0] +"\n" +node[1] +"\n"+node[2];
+            });
+        });
         neuralInfo.status.error.innerText = Math.round(output.error*1000)/1000;
       };
 

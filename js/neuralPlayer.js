@@ -25,11 +25,23 @@ define(["state", 'underscore'],function(State, _) {
                     output: normalize(ball,true)
                   };
       current = undefined;
-      notes.push(note);
+      push(note);
     }
   }
 
-	var neural = function(options) {
+  function push(note) {
+    var i, end = notes.length;
+    for (i = 0; i < end; i+=1) {
+      var ni = notes[i];
+      if ( ni.input[0] > note.input[1] ||
+           (ni.input[0] == note.input[0] && ni.input[1] > note.input[1]) ||
+           (ni.input[0] == note.input[0] && ni.input[1] == note.input[1] && ni.input[2] > note.input[2])) break;
+      if (ni.input[0] == note.input[0] && ni.input[1] == note.input[1] && ni.input[2] == note.input[2]) return;
+    }
+    notes.splice(i,0,note);
+  }
+
+  var neural = function(options) {
     this.left = false;
     this.right = false;
     this.fire = false;
@@ -66,21 +78,19 @@ define(["state", 'underscore'],function(State, _) {
 
   neural.prototype.doService = function() {
     var player = this;
+    this.train();
     setTimeout(function(){
       player.fire = true;
     },throwTime);
-    this.train();
   };
 
   neural.prototype.train = function() {
-    if (notes.length > 1) {
+    if (notes.length > 0) {
       this.net = new brain.NeuralNetwork({
         hiddenLayers: [this.hiddenLayers],
         learningRate: this.learningRate
       });
-      var status = this.net.train(notes,{
-        iterations: this.iterations
-      });
+      var status = this.net.train(notes);
 
       _.each(this.callback.onTrain, function(fn) {
         fn(this.net, status);

@@ -1,0 +1,6 @@
+* Utilización
+	Para ver la aplicación abrir el archivo index.html con un navegador
+
+* Navegadores soportados
+ - Chrome (última versión)
+ - Firefox (última versión)

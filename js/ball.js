@@ -33,9 +33,9 @@ define(["state", 'underscore'],function(State, _) {
     this.callback.onCheck.push(fn);
   };
 
-  ball.prototype.check = function(player) {
+  ball.prototype.check = function(player, hitLine) {
     _.each(this.callback.onCheck, function(fn) {
-      fn(State.obj.ball, player);
+      fn(State.obj.ball.ballAtY(hitLine), player);
     });
   };
 
@@ -71,8 +71,8 @@ define(["state", 'underscore'],function(State, _) {
 
   ball.prototype.step = function() {
     this.backUp();
-    this.pos.x += this.speed.x*State.delta/1000*60;
-    this.pos.y += this.speed.y*State.delta/1000*60;
+    this.pos.x += this.speed.x*1;//State.delta/1000*60;
+    this.pos.y += this.speed.y*1;//State.delta/1000*60;
     this.collide();
   };
 
@@ -96,14 +96,14 @@ define(["state", 'underscore'],function(State, _) {
     }
 
     /* player collisions */
-    var player = State.obj.Player[0],
+    var player = (this.speed.y < 0? State.obj.Player[1] : State.obj.Player[0]),
         prevY = this.prev.pos.y,
-        curY = this.pos.y;
-    if (this.speed.y < 0) player = State.obj.Player[1];
-    if (player.top && (prevY - 4 > player.getY() && player.getY() >= curY - 4)||
-        !player.top && (prevY + 4 < player.getY() && player.getY() <= curY + 4))
+        curY = this.pos.y,
+        hitLine = player.getY() + (player.top?4:-4);
+    if (player.top && (prevY > hitLine && hitLine >= curY )||
+        !player.top && (prevY< hitLine && hitLine <= curY ))
       {
-        this.check(player);
+        this.check(player, hitLine);
         if (player.x < this.pos.x+4  && this.pos.x-4 < player.x + player.width) {
           if (player.top) {
             this.pos.y = player.y + player.height + this.radius + 1;
@@ -119,6 +119,20 @@ define(["state", 'underscore'],function(State, _) {
           player.hit(this);
         }
     }
+  };
+
+  ball.prototype.ballAtY = function(y)  {
+    var outBall = {speed:{},pos:{}};
+    var delta = y - this.prev.pos.y;
+    var vel =outBall.speed.y = this.prev.speed.y;
+    outBall.speed.x = this.prev.speed.x;
+    outBall.pos.x = this.prev.pos.x;
+    outBall.pos.y = y;
+    if (vel * delta > 0)  {
+        var time = delta/vel;
+        outBall.pos.x += this.prev.speed.x*time;
+    }
+    return outBall;
   };
 
   ball.prototype.draw = function() {

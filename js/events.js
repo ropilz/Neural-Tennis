@@ -31,12 +31,14 @@ define(['underscore'],function(_) {
 		_.each(evt.callback.onKeyDown, function(fn) {
 			fn(event);
 		});
+		return true;
 	};
 
 	onkeyup = function(event){
 		_.each(evt.callback.onKeyUp, function(fn) {
 			fn(event);
 		});
+		return true;
 	};
 
 	return evt;
